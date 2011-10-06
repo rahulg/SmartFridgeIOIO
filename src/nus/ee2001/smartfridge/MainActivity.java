@@ -331,12 +331,10 @@ public class MainActivity extends AbstractIOIOActivity {
 				public void run() {
 					low_grocs.setText(grocstr);
 					low_grocs.setEnabled(true);
-					if (!flow) {
-						mode_sms.setEnabled(true);
-						mode_email.setEnabled(true);
-						groc_dest.setEnabled(true);
-						btn_send.setEnabled(true);
-					}
+					mode_sms.setEnabled(!flow);
+					mode_email.setEnabled(!flow);
+					groc_dest.setEnabled(!flow);
+					btn_send.setEnabled(!flow);
 				}
 			});
 		}
