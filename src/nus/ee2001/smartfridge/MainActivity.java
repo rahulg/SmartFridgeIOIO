@@ -36,32 +36,49 @@ import java.io.OutputStream;
  */
 public class MainActivity extends AbstractIOIOActivity {
 	
+	/**
+	 * Enumerates the various connection states of the UARTSync protocol
+	 */
 	public enum SyncState {
 		IDLE, SENQ, SCMD, SACK, SDAT
 	}
 	
+	/**
+	 * Enumerates the commands that can be sent to the SmartFridge
+	 */
 	public enum SyncCmd {
 		NIL, GROCERY, RECIPE
 	}
 	
+	/*
+	 * UI Elements
+	 */
 	protected Button btn_sync, btn_save, btn_send, btn_reset;
 	protected Spinner sp_recipe;
 	protected CheckBox[] checks;
 	protected EditText tb_name, low_grocs, groc_dest;
 	protected RadioGroup mode_grp;
 	protected RadioButton mode_sms, mode_email;
+	
+	/*
+	 * Sync support
+	 */
 	protected SyncState sync_state;
 	protected SyncCmd sync_cmd;
-	protected int data_bytes, cur_mode;
+	protected int cur_mode;
 	protected boolean reset = false;
+	protected String recipe_name;
 	
-	protected final byte kENQ = 0x05;
-	protected final byte kACK = 0x06;
-	protected final byte kNAK = 0x15;
-	protected final byte kEOT = 0x04;
-	protected final byte kDC1 = 0x11;
-	protected final byte kDC2 = 0x12;
-	protected final byte kSYN = 0x16;
+	/*
+	 * ASCII constants
+	 */
+	protected static final byte kENQ = 0x05;
+	protected static final byte kACK = 0x06;
+	protected static final byte kNAK = 0x15;
+	protected static final byte kEOT = 0x04;
+	protected static final byte kDC1 = 0x11;
+	protected static final byte kDC2 = 0x12;
+	protected static final byte kSYN = 0x16;
 	
 	
 	/**
@@ -110,49 +127,60 @@ public class MainActivity extends AbstractIOIOActivity {
 		}
 		
 		sync_state = SyncState.IDLE;
-		data_bytes = 0;
 	}
 	
+	/**
+	 * Creates a toast with default configuration.
+	 * @param str
+	 */
 	public void myToast(String str) {
 		Toast.makeText(getApplicationContext(), str, Toast.LENGTH_SHORT).show();
 	}
 	
-	public void buttonPressed(View button) {
-		String btag = (String) button.getTag();
-		if (btag == "StartSync") {
-			sync_cmd = SyncCmd.GROCERY;
-			sync_state = SyncState.SENQ;
-		} else if (btag == "Save") {
-			
-		} else if (btag == "SendSMS") {
-			
-		} else if (btag == "SendEmail") {
-			
-		}
-	}
-	
+	/**
+	 * Called when the "Sync" button is pressed.
+	 * @param btn
+	 */
 	public void startSync(View btn) {
 		if (sync_state == SyncState.IDLE) {
 			sync_cmd = SyncCmd.GROCERY;
 			sync_state = SyncState.SENQ;
 		} else {
-			Toast.makeText(getApplicationContext(), "Sync in progress.", Toast.LENGTH_SHORT).show();
+			myToast("Another sync is in progress");
 		}
 	}
 	
+	/**
+	 * Called when the "Save" button is pressed.
+	 * @param btn
+	 */
 	public void saveRecipe(View btn) {
 		if (sync_state == SyncState.IDLE) {
+			recipe_name = tb_name.getText().toString();
+			while (recipe_name.length() < 5) {
+				recipe_name += " ";
+			}
 			sync_cmd = SyncCmd.RECIPE;
 			sync_state = SyncState.SENQ;
 		} else {
-			Toast.makeText(getApplicationContext(), "Sync in progress.", Toast.LENGTH_SHORT).show();
+			myToast("Another sync is in progress");
 		}
 	}
 	
+	/**
+	 * Called when the "Reset" button is pressed.
+	 * @param btn
+	 */
 	public void resetButton(View btn) {
+		sync_cmd = SyncCmd.NIL;
+		sync_state = SyncState.IDLE;
 		reset = true;
 	}
 	
+	/**
+	 * Called when either the data export mode is changed by selecting a radiobutton.
+	 * @param btn
+	 */
 	public void modeSwitch(View btn) {
 		int new_mode = mode_grp.getCheckedRadioButtonId();
 		if (new_mode == cur_mode) {
@@ -172,6 +200,10 @@ public class MainActivity extends AbstractIOIOActivity {
 		cur_mode = new_mode;
 	}
 	
+	/**
+	 * Called when the "Send" button is pressed.
+	 * @param btn
+	 */
 	public void sendList(View btn) {
 		String dest = groc_dest.getText().toString();
 		String dest2[] = { dest };
@@ -234,29 +266,40 @@ public class MainActivity extends AbstractIOIOActivity {
 			sync_in = sync_uart.getInputStream();
 			sync_out = sync_uart.getOutputStream();
 			
+			data_sent = 0;
 			led_stat.write(true);
 		}
 		
-		protected void uiEnable(int iid) {
-			final int id = iid;
+		/**
+		 * Enables a UI element
+		 * @param iv
+		 */
+		protected void uiEnable(View iv) {
+			final View v = iv;
 			runOnUiThread(new Runnable() {
 				public void run() {
-					View iv = (View) findViewById(id);
-					iv.setEnabled(true);
+					v.setEnabled(true);
 				}
 			});
 		}
 		
-		protected void uiDisable(int iid) {
-			final int id = iid;
+		/**
+		 * Disables a UI element
+		 * @param iv
+		 */
+		protected void uiDisable(View iv) {
+			final View v = iv;
 			runOnUiThread(new Runnable() {
 				public void run() {
-					View iv = (View) findViewById(id);
-					iv.setEnabled(false);
+					v.setEnabled(false);
 				}
 			});
 		}
 		
+		/**
+		 * Enables the low grocery UI.
+		 * @param inp
+		 */
 		protected void uiGroceries(byte inp) {
 			boolean low[] = new boolean[5];
 			low[0] = (inp & 0x01) == 0x01;
@@ -278,21 +321,32 @@ public class MainActivity extends AbstractIOIOActivity {
 				}
 			}
 			
+			if (firstlow) {
+				tmp = "We're stocked! :D";
+			}
+			
 			final String grocstr = tmp;
+			final boolean flow = firstlow;
 			runOnUiThread(new Runnable() {
 				public void run() {
 					low_grocs.setText(grocstr);
 					low_grocs.setEnabled(true);
-					mode_sms.setEnabled(true);
-					mode_email.setEnabled(true);
-					groc_dest.setEnabled(true);
-					btn_send.setEnabled(true);
+					if (!flow) {
+						mode_sms.setEnabled(true);
+						mode_email.setEnabled(true);
+						groc_dest.setEnabled(true);
+						btn_send.setEnabled(true);
+					}
 				}
 			});
 		}
 		
-		protected void uiToast(CharSequence instr) {
-			final CharSequence str = instr;
+		/**
+		 * Creates a toast on the UI Thread.
+		 * @param instr
+		 */
+		protected void uiToast(String instr) {
+			final String str = instr;
 			runOnUiThread(new Runnable() {
 				public void run() {
 					Toast.makeText(getApplicationContext(), str, Toast.LENGTH_SHORT).show();
@@ -300,14 +354,20 @@ public class MainActivity extends AbstractIOIOActivity {
 			});
 		}
 		
+		/**
+		 * UARTSync protocol implementation.
+		 * @return
+		 * @throws ConnectionLostException
+		 * @throws IOException
+		 */
 		protected int syncProtocol() throws ConnectionLostException, IOException {
 			int sleeptime = 10;
 			
 			if (sync_state == SyncState.IDLE) {
-				sleeptime = 100;
+				sleeptime = 500;
 				sync_out.write(kSYN);
 				if (sync_in.available() > 0) {
-					linkstate = 20;
+					linkstate = 5;
 					inp_buf = (byte) sync_in.read();
 				}
 				sent = false;
@@ -318,7 +378,7 @@ public class MainActivity extends AbstractIOIOActivity {
 					sent = true;
 				}
 				if (sync_in.available() > 0) {
-					linkstate = 20;
+					linkstate = 5;
 					inp_buf = (byte) sync_in.read();
 					if (inp_buf == kACK && sync_in.available() == 0) {
 						sent = false;
@@ -337,7 +397,7 @@ public class MainActivity extends AbstractIOIOActivity {
 					}
 					
 					if (sync_in.available() > 0) {
-						linkstate = 20;
+						linkstate = 5;
 						inp_buf = (byte) sync_in.read();
 						inp_buf &= 0x1F; // extract lowest 5 bits
 						uiGroceries(inp_buf);
@@ -348,15 +408,12 @@ public class MainActivity extends AbstractIOIOActivity {
 				} else if (sync_cmd == SyncCmd.RECIPE) {
 					if (!sent) {
 						sent = true;
-						uiToast("DC2 Sent");
 						sync_out.write(kDC2);
 					}
 					if (sync_in.available() > 0) {
-						uiToast("WDC2");
-						linkstate = 20;
+						linkstate = 5;
 						inp_buf = (byte) sync_in.read();
 						if (inp_buf == kDC2) {
-							uiToast("DC2 echo recv");
 							sent = false;
 							data_sent = 0;
 							sync_cmd = SyncCmd.NIL;
@@ -369,12 +426,12 @@ public class MainActivity extends AbstractIOIOActivity {
 				if (data_sent == 0) {
 					
 					if (!sent) {
-						byte eep_addr = (byte) (sp_recipe.getSelectedItemPosition() * 6);
+						byte eep_addr = (byte) (0x80 | sp_recipe.getSelectedItemPosition());
 						sent = true;
 						sync_out.write(eep_addr);
 					}
 					if (sync_in.available() > 0) {
-						linkstate = 20;
+						linkstate = 5;
 						inp_buf = (byte) sync_in.read();
 						if (inp_buf == kACK) {
 							sent = false;
@@ -394,7 +451,7 @@ public class MainActivity extends AbstractIOIOActivity {
 						sync_out.write(temp);
 					}
 					if (sync_in.available() > 0) {
-						linkstate = 20;
+						linkstate = 5;
 						inp_buf = (byte) sync_in.read();
 						if (inp_buf == kACK) {
 							sent = false;
@@ -404,10 +461,10 @@ public class MainActivity extends AbstractIOIOActivity {
 				} else {
 					if (!sent) {
 						sent = true;
-						sync_out.write(tb_name.getText().toString().charAt(data_sent - 3));
+						sync_out.write(recipe_name.charAt(data_sent - 2));
 					}
 					if (sync_in.available() > 0) {
-						linkstate = 20;
+						linkstate = 5;
 						inp_buf = (byte) sync_in.read();
 						if (inp_buf == kACK) {
 							sent = false;
@@ -415,7 +472,7 @@ public class MainActivity extends AbstractIOIOActivity {
 						}
 					}
 				}
-				if (data_sent == 8) {
+				if (data_sent == 7) {
 					sent = false;
 					data_sent = 0;
 					sync_state = SyncState.SACK;
@@ -426,7 +483,7 @@ public class MainActivity extends AbstractIOIOActivity {
 					sync_out.write(kACK);
 				}
 				if (sync_in.available() > 0) {
-					linkstate = 20;
+					linkstate = 5;
 					inp_buf = (byte) sync_in.read();
 					if (inp_buf == kEOT) {
 						uiToast("Sync complete!");
@@ -435,28 +492,24 @@ public class MainActivity extends AbstractIOIOActivity {
 					}
 				}
 			}
-			if (linkstate == 20) {
-				uiEnable(R.id.startsyncb);
-				uiEnable(R.id.recipesel);
-				uiEnable(R.id.rec_name);
-				uiEnable(R.id.cb_milk);
-				uiEnable(R.id.cb_egg);
-				uiEnable(R.id.cb_fruit);
-				uiEnable(R.id.cb_veg);
-				uiEnable(R.id.cb_choc);
-				uiEnable(R.id.saveb);
-			} else if (linkstate == 0) {
+			if (linkstate >= 5) {
+				uiEnable(btn_sync);
+				uiEnable(sp_recipe);
+				uiEnable(tb_name);
+				for (int i = 0; i < 5; ++i) {
+					uiEnable(checks[i]);
+				}
+				uiEnable(btn_save);
+			} else if (linkstate <= 0) {
 				sync_state = SyncState.IDLE;
 				sync_cmd = SyncCmd.NIL;
-				uiDisable(R.id.startsyncb);
-				uiDisable(R.id.recipesel);
-				uiDisable(R.id.rec_name);
-				uiDisable(R.id.cb_milk);
-				uiDisable(R.id.cb_egg);
-				uiDisable(R.id.cb_fruit);
-				uiDisable(R.id.cb_veg);
-				uiDisable(R.id.cb_choc);
-				uiDisable(R.id.saveb);
+				uiDisable(btn_sync);
+				uiDisable(sp_recipe);
+				uiDisable(tb_name);
+				for (int i = 0; i < 5; ++i) {
+					uiDisable(checks[i]);
+				}
+				uiDisable(btn_save);
 			}
 			if (linkstate > 0) {
 				--linkstate;
@@ -478,6 +531,7 @@ public class MainActivity extends AbstractIOIOActivity {
 			try {
 				if (reset) {
 					reset = false;
+					sync_out.write(kEOT);
 					ioio_.hardReset();
 				}
 				thread_sleep = syncProtocol();
