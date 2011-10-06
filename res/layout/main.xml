@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_height="match_parent" android:layout_width="match_parent" android:id="@+id/outerContainerView">
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/scrollyView" android:fadeScrollbars="true" android:fadingEdge="vertical" android:isScrollContainer="true" android:overScrollMode="ifContentScrolls" android:scrollbars="vertical">
+    	<RelativeLayout android:layout_height="match_parent" android:layout_width="match_parent" android:id="@+id/containerView">
+    		<TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge" android:layout_alignParentTop="true" android:layout_alignParentLeft="true" android:text="@string/sync_lab" android:id="@+id/synctext" />
+    		<Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignParentLeft="true" android:id="@+id/startsyncb" android:layout_below="@+id/synctext" android:onClick="startSync" android:text="@string/sync_str" />
+    		<Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBottom="@+id/startsyncb" android:layout_alignParentRight="true" android:text="@string/reset_str" android:layout_alignBaseline="@+id/startsyncb" android:id="@+id/resetb" android:onClick="resetButton" />
+    		<TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/groceries" android:layout_alignParentLeft="true" android:layout_below="@+id/startsyncb" android:text="@string/groceries_str" android:layout_marginTop="8dp"/>
+    		<EditText android:id="@+id/low_grocs" android:layout_alignParentLeft="true" android:layout_below="@+id/groceries" android:layout_width="fill_parent" android:layout_height="100dp" android:maxHeight="100dp" android:minHeight="100dp" />
+    		<RadioGroup android:layout_height="wrap_content" android:layout_below="@+id/low_grocs" android:layout_alignParentLeft="true" android:id="@+id/mode_grp" android:layout_width="fill_parent" android:orientation="horizontal">
+        		<RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:id="@+id/mode_sms" android:text="@string/sms_str" android:onClick="modeSwitch" android:layout_weight="1" />
+        		<RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/email_str" android:id="@+id/mode_email" android:onClick="modeSwitch" android:layout_centerHorizontal="true" android:layout_weight="1" />
+    		</RadioGroup>
+    		<LinearLayout android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/listDestination" android:layout_below="@+id/mode_grp">
+    			<EditText android:inputType="phone" android:layout_height="wrap_content" android:id="@+id/groc_dest" android:layout_alignParentLeft="true" android:layout_width="fill_parent" android:layout_weight="1" />
+    			<Button android:layout_height="wrap_content" android:layout_below="@+id/mode_grp" android:text="@string/send_str" android:id="@+id/sendb" android:layout_toRightOf="@+id/groc_dest" android:layout_alignParentRight="true" android:onClick="sendList" android:layout_width="fill_parent" android:layout_weight="5" />
+    		</LinearLayout>
+    		<TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge" android:layout_alignParentLeft="true" android:id="@+id/recipetext" android:text="@string/recipe_str" android:layout_below="@+id/listDestination" android:layout_marginTop="8dp"/>
+    		<Spinner android:layout_height="wrap_content" android:layout_below="@+id/recipetext" android:id="@+id/recipesel" android:entries="@array/recipe_arr" android:layout_width="fill_parent" />
+    		<EditText android:layout_height="wrap_content" android:id="@+id/rec_name" android:layout_width="fill_parent" android:layout_below="@+id/recipesel" android:hint="@string/recipe_name" android:lines="1" android:maxLength="5" android:inputType="text" />
+    		<CheckBox android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignParentLeft="true" android:text="Milk" android:id="@+id/cb_milk" android:layout_below="@+id/rec_name" />
+    		<CheckBox android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Eggs" android:id="@+id/cb_egg" android:layout_alignBaseline="@+id/cb_milk" android:layout_alignBottom="@+id/cb_milk" android:layout_centerHorizontal="true" />
+    		<CheckBox android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@+id/cb_milk" android:layout_alignBottom="@+id/cb_milk" android:layout_alignParentRight="true" android:id="@+id/cb_fruit" android:text="Fruit" />
+    		<CheckBox android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignParentLeft="true" android:id="@+id/cb_veg" android:layout_below="@+id/cb_milk" android:text="Vegetables" />
+    		<CheckBox android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_alignBaseline="@+id/cb_veg" android:layout_alignBottom="@+id/cb_veg" android:id="@+id/cb_choc" android:text="Chocolates" android:layout_toRightOf="@+id/cb_veg" android:layout_alignLeft="@+id/cb_egg" />
+    		<Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_below="@+id/cb_veg" android:layout_alignParentLeft="true" android:id="@+id/saveb" android:text="@string/save_str" android:onClick="saveRecipe" />
+		</RelativeLayout>
+    </ScrollView>
+</LinearLayout>

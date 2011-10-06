@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="test_led">Debug LED</string>
+    <string name="app_name">Smart Fridge</string>
+    <string name="sync_lab">Sync</string>
+    <string name="sync_str">Sync</string>
+    <string name="recipe_str">Recipe</string>
+    <string-array name="recipe_arr">
+        <item>Recipe 1</item>
+        <item>Recipe 2</item>
+        <item>Recipe 3</item>
+        <item>Recipe 4</item>
+        <item>Recipe 5</item>
+    </string-array>
+    <string name="save_str">Save</string>
+    <string name="recipe_name">Recipe Name</string>
+    <string name="groceries_str">Groceries</string>
+    <string name="sms_str">SMS</string>
+    <string name="email_str">Email</string>
+    <string name="reset_str">Reset</string>
+    <string name="send_str">Send</string>
+    <string name="hint_sms">Phone Number</string>
+    <string name="hint_email">Email Address</string>
+</resources>
