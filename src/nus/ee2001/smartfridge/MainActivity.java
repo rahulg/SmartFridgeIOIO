@@ -262,7 +262,7 @@ public class MainActivity extends AbstractIOIOActivity {
 			led_stat = ioio_.openDigitalOutput(IOIO.LED_PIN);
 			DigitalInput.Spec uart_rx = new DigitalInput.Spec(4, DigitalInput.Spec.Mode.FLOATING);
 			DigitalOutput.Spec uart_tx = new DigitalOutput.Spec(3, DigitalOutput.Spec.Mode.OPEN_DRAIN);
-			sync_uart = ioio_.openUart(uart_rx, uart_tx, 33600, Uart.Parity.NONE, Uart.StopBits.ONE);
+			sync_uart = ioio_.openUart(uart_rx, uart_tx, 57600, Uart.Parity.NONE, Uart.StopBits.ONE);
 			sync_in = sync_uart.getInputStream();
 			sync_out = sync_uart.getOutputStream();
 			
