@@ -214,7 +214,7 @@ public class MainActivity extends AbstractIOIOActivity {
 		private byte inp_buf;
 		private boolean sent;
 		private long thread_sleep;
-		private int linkstate = 0;
+		private int linkstate = 0, data_sent=0;
 
 		/**
 		 * Called every time a connection with IOIO has been established.
@@ -331,72 +331,105 @@ public class MainActivity extends AbstractIOIOActivity {
 						sent = true;
 						sync_out.write(kDC1);
 					}
-					if (sync_in.available() > 1) {
-						linkstate = 20;
+					
+					while (sync_in.available() > 1) {
 						inp_buf = (byte) sync_in.read();
 					}
-					inp_buf = (byte) sync_in.read();
-					inp_buf &= 0x1F; // extract lowest 5 bits
-					uiGroceries(inp_buf);
-					sync_cmd = SyncCmd.NIL;
-					sync_state = SyncState.SACK;
+					
+					if (sync_in.available() > 0) {
+						linkstate = 20;
+						inp_buf = (byte) sync_in.read();
+						inp_buf &= 0x1F; // extract lowest 5 bits
+						uiGroceries(inp_buf);
+						sent = false;
+						sync_cmd = SyncCmd.NIL;
+						sync_state = SyncState.SACK;
+					}
 				} else if (sync_cmd == SyncCmd.RECIPE) {
-					sync_out.write(kDC2);
-					uiToast("DC2 Sent");
-					while (sync_in.available() > 0) {
-						uiToast("WACK0");
+					if (!sent) {
+						sent = true;
+						uiToast("DC2 Sent");
+						sync_out.write(kDC2);
+					}
+					if (sync_in.available() > 0) {
+						uiToast("WDC2");
 						linkstate = 20;
 						inp_buf = (byte) sync_in.read();
 						if (inp_buf == kDC2) {
 							uiToast("DC2 echo recv");
+							sent = false;
+							data_sent = 0;
 							sync_cmd = SyncCmd.NIL;
 							sync_state = SyncState.SDAT;
 						}
 					}
 				}
 			} else if (sync_state == SyncState.SDAT) {
-				uiToast("Mode SDAT");
-				linkstate = 20;
-				byte eep_addr = (byte) (sp_recipe.getSelectedItemPosition() * 6);
-				byte temp = 0;
-				for (int i = 0; i < 5; ++i) {
-					if (checks[i].isChecked()) {
-						temp |= (0x01 << i);
+				
+				if (data_sent == 0) {
+					
+					if (!sent) {
+						byte eep_addr = (byte) (sp_recipe.getSelectedItemPosition() * 6);
+						sent = true;
+						sync_out.write(eep_addr);
 					}
-				}
-				inp_buf = 0x00;
-				sync_out.write(eep_addr);
-				while (inp_buf != kACK) {
-					while (sync_in.available() < 1);
-					uiToast("Dumping packets till ACK1");
-					inp_buf = (byte) sync_in.read();
-				}
-				inp_buf = 0x00;
-				sync_out.write(temp);
-				while (inp_buf != kACK) {
-					while (sync_in.available() < 1);
-					uiToast("Dumping packets till ACK2");
-					inp_buf = (byte) sync_in.read();
-				}
-				for (int i = 0; i < 5; ++i) {
-					inp_buf = 0x00;
-					sync_out.write(tb_name.getText().charAt(i));
-					uiToast("Writing DAT");
-					while (inp_buf != kACK) {
-						uiToast("WACK3");
-						while (sync_in.available() < 1);
-						uiToast("ACK3");
+					if (sync_in.available() > 0) {
+						linkstate = 20;
 						inp_buf = (byte) sync_in.read();
+						if (inp_buf == kACK) {
+							sent = false;
+							data_sent = 1;
+						}
+					}
+				} else if (data_sent == 1) {
+					
+					if (!sent) {
+						byte temp = 0;
+						for (int i = 0; i < 5; ++i) {
+							if (checks[i].isChecked()) {
+								temp |= (0x01 << i);
+							}
+						}
+						sent = true;
+						sync_out.write(temp);
+					}
+					if (sync_in.available() > 0) {
+						linkstate = 20;
+						inp_buf = (byte) sync_in.read();
+						if (inp_buf == kACK) {
+							sent = false;
+							data_sent = 2;
+						}
+					}
+				} else {
+					if (!sent) {
+						sent = true;
+						sync_out.write(tb_name.getText().toString().charAt(data_sent - 3));
+					}
+					if (sync_in.available() > 0) {
+						linkstate = 20;
+						inp_buf = (byte) sync_in.read();
+						if (inp_buf == kACK) {
+							sent = false;
+							++data_sent;
+						}
 					}
 				}
-				sync_state = SyncState.SACK;
+				if (data_sent == 8) {
+					sent = false;
+					data_sent = 0;
+					sync_state = SyncState.SACK;
+				}
 			} else if (sync_state == SyncState.SACK) {
-				uiToast("EoT!");
-				sync_out.write(kACK);
-				while (sync_in.available() > 0) {
-					linkstate = 10;
+				if (!sent) {
+					sent = true;
+					sync_out.write(kACK);
+				}
+				if (sync_in.available() > 0) {
+					linkstate = 20;
 					inp_buf = (byte) sync_in.read();
 					if (inp_buf == kEOT) {
+						uiToast("Sync complete!");
 						led_stat.write(true);
 						sync_state = SyncState.IDLE;
 					}
