@@ -439,7 +439,7 @@ public class MainActivity extends AbstractIOIOActivity {
 				} else if (data_sent == 1) {
 					
 					if (!sent) {
-						byte temp = 0;
+						byte temp = (byte) 0x80;
 						for (int i = 0; i < 5; ++i) {
 							if (checks[i].isChecked()) {
 								temp |= (0x01 << i);
