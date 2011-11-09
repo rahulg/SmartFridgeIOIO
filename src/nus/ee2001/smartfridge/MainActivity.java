@@ -530,7 +530,7 @@ public class MainActivity extends AbstractIOIOActivity {
 				if (reset) {
 					reset = false;
 					sync_out.write(kEOT);
-					ioio_.hardReset();
+					ioio_.softReset();
 				}
 				thread_sleep = syncProtocol();
 				sleep(thread_sleep);
