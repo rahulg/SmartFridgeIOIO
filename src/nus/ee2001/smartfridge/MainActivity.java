@@ -26,14 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * This is the main activity of the HelloIOIO example application.
- * 
- * It displays a toggle button on the screen, which enables control of the
- * on-board LED. This example shows a very simple usage of the IOIO, by using
- * the {@link AbstractIOIOActivity} class. For a more advanced use case, see the
- * HelloIOIOPower example.
- */
 public class MainActivity extends AbstractIOIOActivity {
 	
 	/**
